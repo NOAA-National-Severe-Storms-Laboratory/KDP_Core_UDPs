@@ -1,0 +1,38 @@
+//**********************************************************************
+// KDP at melting level by Kuster, et. al. Using KDP cores as a downburst
+// precursor signature (2021)
+
+Product
+ {
+  Name     = "KDP1"     // product name is KDP1 (KDP core within 1km of melting level)
+  Category = "KDP"      // it uses the KDP category and color table
+  resolution = high
+ }
+
+
+//**********************************************************************
+Program
+{
+  float kdp_0C;       // declare variables to hold value
+  float near_ml;
+  float max_kdp;  
+  
+    kdp_0C = 0;
+    max_kdp = 0;
+  near_ml = ( constants.hgt_0c - 1000 );
+  enumerate levels from near_ml to constants.hgt_0c // enumerate from 1km below melting level to melting level
+{ 
+  kdp_0C = max( kdp_0C, KDPfromHGT( level.height ) );
+    
+}  
+  if ( kdp_0C > 1.5 ) // set values to threshold
+    {
+    kdp_0C = kdp_0C;    
+    }
+   else
+    {
+    kdp_0C = constants.ND;
+    }
+
+  return kdp_0C;
+ }

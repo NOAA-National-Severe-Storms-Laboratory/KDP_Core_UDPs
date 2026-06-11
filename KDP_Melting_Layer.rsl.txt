@@ -1,0 +1,25 @@
+// This product uses the environmental data downloaded by GR2Analyst to
+// determine and plot KDP at the height of the melting layer for values
+// greater than 1 deg/km as a proxy for KDP cores.
+
+Product
+ {
+  Name = "MKDP"
+  Category = "KDP"
+  resolution = high
+ }
+
+Program
+{
+  float hgt_ml;   // Variable to hold the height of the melting layer
+  float kdp;      // Variable to hold the KDP value
+
+  hgt_ml = HGTfromTEMP(0); // Assuming melting layer is at 0°C
+  kdp = KDPfromHGT(hgt_ml); // Get the KDP value at the melting layer height
+
+  if (kdp >= 1.0) {
+    return kdp; // Return the KDP value if it is >= 1.0 degrees/km
+  } else {
+    return constants.ND; // Return No Data if KDP is < 1.0 degrees/km
+  }
+}

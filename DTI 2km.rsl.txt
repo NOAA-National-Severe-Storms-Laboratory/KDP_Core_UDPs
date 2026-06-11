@@ -1,0 +1,71 @@
+Product 
+{
+    Name = "DT2"
+    Category 
+    {
+        Missing = 0
+        Minimum = 0
+        Maximum = 100
+        Units = "Index"
+        ColorTable 
+        {
+            Units = "Index"
+            Step = 10
+            
+            Color[0]  = solid(rgb(0,0,0,0))
+            Color[15] = rgb(0, 255, 0)      // Green: Weak Core (Monitoring)
+            Color[35] = rgb(255, 255, 0)    // Yellow: Elevated Threat
+            Color[55] = rgb(255, 128, 0)    // Orange: Strong Threat
+            Color[75] = rgb(255, 0, 0)      // Red: Severe Threat
+            Color[95] = rgb(255, 0, 255)    // Magenta: Extreme Threat
+        }
+    }
+}
+
+Program 
+{
+    float max_kdp_melt;
+    float max_kdp_2km;
+    float threat_index;
+
+    max_kdp_melt = 0;
+    max_kdp_2km = 0;
+    threat_index = 0;
+
+    // 1. Scan the "Melting Zone" (0 to 1000m below the environmental freezing level)
+    enumerate levels from (constants.hgt_0c - 1000) to constants.hgt_0c 
+    {
+        max_kdp_melt = max(max_kdp_melt, KDPfromHGT(level.height));
+    }
+
+    // 2. Science Check: If there is no KDP core >= 1.0 deg/km here, there is no threat.
+    if (max_kdp_melt < 1.0) 
+    {
+        return 0;
+    }
+
+    // 3. Scan the "2km Below Zone" (1500m to 2500m below the freezing level)
+    // We use a 1000m window to ensure we catch the core despite radar tilt gaps.
+    enumerate levels from (constants.hgt_0c - 2500) to (constants.hgt_0c - 1500) 
+    {
+        max_kdp_2km = max(max_kdp_2km, KDPfromHGT(level.height));
+    }
+
+    // 4. Build the Base Threat from Melting Layer KDP
+    // Scaled to reward higher magnitudes near the melting layer.
+    if (max_kdp_melt >= 4.0) { threat_index += 60; }
+    elseif (max_kdp_melt >= 3.0) { threat_index += 45; }
+    elseif (max_kdp_melt >= 2.0) { threat_index += 30; }
+    elseif (max_kdp_melt >= 1.0) { threat_index += 15; }
+
+    // 5. Add Bonus Threat from KDP Magnitude 2km Below the Melting Layer
+    // Based on the updated violin plots, strong downbursts cluster higher at this depth.
+    if (max_kdp_2km >= 4.5) { threat_index += 40; }
+    elseif (max_kdp_2km >= 3.5) { threat_index += 25; }
+    elseif (max_kdp_2km >= 2.5) { threat_index += 10; }
+
+    // 6. Cap the maximum score at 100
+    threat_index = min(threat_index, 100);
+
+    return threat_index;
+}

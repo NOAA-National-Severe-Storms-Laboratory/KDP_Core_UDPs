@@ -1,0 +1,38 @@
+//**********************************************************************
+// Finds the max KDP up to 0C. Used with KDP_0C product to identify downbursts
+
+Product
+ {
+  Name     = "Km0"     // product name is KDP_m0
+  Category = "KDP"      // it uses the KDP category and color table
+
+  min_br_required = 30  // only interested in columns with BR >= 30 dbz
+ }
+
+
+//**********************************************************************
+Program
+ {
+  float max_kdp;       // declare variable to hold max value
+
+  max_kdp = 0;         // initialize it to zero
+
+  enumerate levels from constants.hgt_radar_msl to HGTfromTEMP( 0 )    // enumerate up to 0C
+//   {
+ //   if( BRfromHGT( level.height ) > 30 )      // max only where BR > 30 dbz
+     {
+      max_kdp = max( max_kdp, KDPfromHGT( level.height ) );
+     }
+	if ( max_kdp > 2 ) // set values to threshold
+    {
+	max_kdp = max_kdp;
+   }
+   else
+    {
+    max_kdp = constants.ND;
+   }
+   
+
+  return max_kdp;
+ }
+ //}

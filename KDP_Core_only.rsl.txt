@@ -1,0 +1,50 @@
+// This product uses the environmental data downloaded by GR2Analyst to
+// determine the maximum KDP between the height of the melting layer 
+// and 2 km below it for values greater than 1 deg/km as a proxy for KDP 
+// cores.
+//
+// Written by: Kristofer Tuftedal
+
+Product
+ {
+  Name = "TKDP"
+  Category = "KDP"
+  resolution = high
+ }
+
+Program
+{
+  float kdp;         // Variable to hold the current value of KDP during iteration
+  float hgt_ml;      // Variable to hold the height of the melting layer
+  float hgt_bottom;  // Variable to hold the height 2 km below the melting layer
+  float max_kdp;     // Variable to hold the maximum KDP value
+
+  hgt_ml = HGTfromTEMP(0) + 1000; // Get the height of the melting layer (0°C)
+  hgt_bottom = hgt_ml - 2000; // Calculate the height 2 km below the melting layer
+
+  max_kdp = constants.ND; // Initialize max_kdp with No Data value
+
+  // Enumerate through the heights from hgt_bottom to hgt_ml
+  enumerate levels from hgt_bottom to hgt_ml
+  {
+    kdp = KDPfromHGT(level.height); // Get the KDP value at the current level height
+    if (kdp >= 1.0) { // Only consider KDP values >= 1 degree/km
+      if (max_kdp == constants.ND || kdp > max_kdp) {
+        max_kdp = kdp; // Update max_kdp if the current KDP value is greater
+      }
+    }
+  }
+  
+  // Remove data if KDP values above the melting layer meet or exceed that below it
+  enumerate levels from hgt_ml
+  {
+    kdp = KDPfromHGT(level.height); // Get the KDP value at the current level height
+    if (kdp >= 1.0) { // Only consider KDP values >= 1 degree/km
+      if (max_kdp == constants.ND || kdp >= (max_kdp - (max_kdp*0.1))) {
+        max_kdp = constants.ND; // Update max_kdp if the current KDP value is greater
+      }
+    }
+  }
+
+  return max_kdp; // Return the maximum KDP value found in the range
+}
